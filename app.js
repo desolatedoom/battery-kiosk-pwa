@@ -2,9 +2,12 @@ const TARGET_LEVEL = 0.55; // 55%
 let batteryRef = null;
 let discharging = false;
 let wakeLock = null;
-let lastLevel = null;
-let lastTime = null;
 
+const SAMPLE_INTERVAL_MS = 30000; // 30 seconds
+const MAX_HISTORY_MINUTES = 10;   // keep last 10 minutes
+
+let drainHistory = [];
+let lastSampleTime = null;
 
 // UI elements
 const statusEl = document.getElementById("status");
@@ -14,7 +17,6 @@ const videoEl = document.getElementById("gpu-video");
 
 // Idle overlay elements
 const idleOverlay = document.getElementById("idleOverlay");
-const mainUI = document.getElementById("mainUI");
 
 // ------------------------------
 // Battery Initialization
@@ -28,34 +30,66 @@ async function initBattery() {
   batteryRef = await navigator.getBattery();
   updateBatteryUI();
   attachBatteryListeners();
+  startDrainSampling();  // start time-based drain sampling
   statusEl.textContent = "Ready. Insert battery and press Start.";
 }
 
+// ------------------------------
+// Drain Sampling (time-based)
+// ------------------------------
+function startDrainSampling() {
+  lastSampleTime = Date.now();
+  setInterval(() => {
+    if (!batteryRef) return;
+    const now = Date.now();
+    const pct = Math.round(batteryRef.level * 100);
+
+    drainHistory.push({ time: now, pct });
+
+    // prune history older than MAX_HISTORY_MINUTES
+    const cutoff = now - MAX_HISTORY_MINUTES * 60 * 1000;
+    drainHistory = drainHistory.filter(entry => entry.time >= cutoff);
+
+    updateDrainRate();
+  }, SAMPLE_INTERVAL_MS);
+}
+
+function updateDrainRate() {
+  const drainRateEl = document.getElementById("drain-rate");
+  if (!drainRateEl) return;
+  if (drainHistory.length < 2) {
+    drainRateEl.textContent = "Drain rate: -- %/hr";
+    return;
+  }
+
+  const first = drainHistory[0];
+  const last = drainHistory[drainHistory.length - 1];
+
+  const deltaPct = first.pct - last.pct; // how much we dropped
+  const deltaHours = (last.time - first.time) / 3600000;
+
+  if (deltaHours <= 0 || deltaPct <= 0) {
+    drainRateEl.textContent = "Drain rate: -- %/hr";
+    return;
+  }
+
+  const rate = (deltaPct / deltaHours).toFixed(2);
+  drainRateEl.textContent = `Drain rate: ${rate} %/hr`;
+}
+
+// ------------------------------
+// Battery UI Update
+// ------------------------------
 function updateBatteryUI() {
   if (!batteryRef) return;
 
   const pct = Math.round(batteryRef.level * 100);
   levelEl.textContent = `Battery: ${pct}%`;
-
-  // Drain rate calculation
-  const now = Date.now();
-
-  if (lastLevel !== null && lastTime !== null) {
-    const deltaPct = lastLevel - pct;
-    const deltaHours = (now - lastTime) / 3600000;
-
-    if (deltaHours > 0) {
-      const rate = (deltaPct / deltaHours).toFixed(2);
-      document.getElementById("drain-rate").textContent =
-        `Drain rate: ${rate} %/hr`;
-    }
-  }
-
-  lastLevel = pct;
-  lastTime = now;
 }
 
-
+// ------------------------------
+// Battery Listeners
+// ------------------------------
 function attachBatteryListeners() {
   batteryRef.addEventListener("levelchange", () => {
     updateBatteryUI();
@@ -150,7 +184,6 @@ function enterIdleMode() {
 
   statusEl.textContent = "Idle mode activated.";
 }
-
 
 // ------------------------------
 // Threshold Check
