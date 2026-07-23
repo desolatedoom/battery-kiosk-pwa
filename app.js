@@ -7,7 +7,7 @@ const SAMPLE_INTERVAL_MS = 30000; // 30 seconds
 const MAX_HISTORY_MINUTES = 10;   // keep last 10 minutes
 
 let drainHistory = [];
-let lastSampleTime = null;
+let drainTimer = null;
 
 // UI elements
 const statusEl = document.getElementById("status");
@@ -17,6 +17,42 @@ const videoEl = document.getElementById("gpu-video");
 
 // Idle overlay elements
 const idleOverlay = document.getElementById("idleOverlay");
+
+// ------------------------------
+// STOP EVERYTHING (shutdown-safe)
+// ------------------------------
+function stopAllActivity() {
+
+  // Stop discharging logic
+  discharging = false;
+
+  // Stop CPU burn + wake lock
+  releaseWakeLock();
+
+  // Stop video drain
+  videoEl.pause();
+  videoEl.src = "";
+
+  // Stop drain-rate sampling timer
+  if (drainTimer) {
+    clearInterval(drainTimer);
+    drainTimer = null;
+  }
+
+  // Stop battery listeners
+  if (batteryRef) {
+    batteryRef.removeEventListener("levelchange", batteryLevelHandler);
+    batteryRef.removeEventListener("chargingchange", batteryChargingHandler);
+  }
+
+  // Freeze UI updates
+  statusEl.textContent = "";
+  levelEl.textContent = "";
+
+  // Freeze drain-rate display
+  const drainRateEl = document.getElementById("drain-rate");
+  if (drainRateEl) drainRateEl.textContent = "";
+}
 
 // ------------------------------
 // Battery Initialization
@@ -30,7 +66,7 @@ async function initBattery() {
   batteryRef = await navigator.getBattery();
   updateBatteryUI();
   attachBatteryListeners();
-  startDrainSampling();  // start time-based drain sampling
+  startDrainSampling();
   statusEl.textContent = "Ready. Insert battery and press Start.";
 }
 
@@ -38,15 +74,14 @@ async function initBattery() {
 // Drain Sampling (time-based)
 // ------------------------------
 function startDrainSampling() {
-  lastSampleTime = Date.now();
-  setInterval(() => {
-    if (!batteryRef) return;
+  drainTimer = setInterval(() => {
+    if (!batteryRef || !discharging) return;
+
     const now = Date.now();
     const pct = Math.round(batteryRef.level * 100);
 
     drainHistory.push({ time: now, pct });
 
-    // prune history older than MAX_HISTORY_MINUTES
     const cutoff = now - MAX_HISTORY_MINUTES * 60 * 1000;
     drainHistory = drainHistory.filter(entry => entry.time >= cutoff);
 
@@ -65,7 +100,7 @@ function updateDrainRate() {
   const first = drainHistory[0];
   const last = drainHistory[drainHistory.length - 1];
 
-  const deltaPct = first.pct - last.pct; // how much we dropped
+  const deltaPct = first.pct - last.pct;
   const deltaHours = (last.time - first.time) / 3600000;
 
   if (deltaHours <= 0 || deltaPct <= 0) {
@@ -88,17 +123,20 @@ function updateBatteryUI() {
 }
 
 // ------------------------------
-// Battery Listeners
+// Battery Listeners (removable)
 // ------------------------------
-function attachBatteryListeners() {
-  batteryRef.addEventListener("levelchange", () => {
-    updateBatteryUI();
-    if (discharging) checkThreshold();
-  });
+function batteryLevelHandler() {
+  updateBatteryUI();
+  if (discharging) checkThreshold();
+}
 
-  batteryRef.addEventListener("chargingchange", () => {
-    updateBatteryUI();
-  });
+function batteryChargingHandler() {
+  updateBatteryUI();
+}
+
+function attachBatteryListeners() {
+  batteryRef.addEventListener("levelchange", batteryLevelHandler);
+  batteryRef.addEventListener("chargingchange", batteryChargingHandler);
 }
 
 // ------------------------------
@@ -147,7 +185,6 @@ function startDischarge() {
   statusEl.textContent = "Discharging… will stop at 55%.";
   requestWakeLock();
 
-  // Load your drain video
   videoEl.src = "assets/discharge-video-4k.mp4";
   videoEl.play().catch(() => {});
 
@@ -159,7 +196,6 @@ function stopDischarge() {
   discharging = false;
   releaseWakeLock();
 
-  // Stop video drain
   videoEl.pause();
   videoEl.src = "";
 
@@ -167,22 +203,18 @@ function stopDischarge() {
 }
 
 // ------------------------------
-// Idle Mode (replaces shutdown)
+// Idle Mode (shutdown-safe)
 // ------------------------------
 function enterIdleMode() {
-  stopDischarge();
 
-  // Switch white overlay to navy
+  stopAllActivity();
+
   const whiteOverlay = document.getElementById("white-overlay");
   whiteOverlay.style.backgroundColor = "#0a1a3a"; // navy
 
-  // Hide UI
   document.getElementById("ui").style.display = "none";
 
-  // Show idle overlay message
   idleOverlay.style.display = "block";
-
-  statusEl.textContent = "Idle mode activated.";
 }
 
 // ------------------------------
@@ -193,10 +225,11 @@ function checkThreshold() {
   const pct = Math.round(level * 100);
 
   if (level <= TARGET_LEVEL) {
-    stopDischarge();
+
+    stopAllActivity();
+
     levelEl.textContent = `Battery: ${pct}% (target reached)`;
 
-    // Replace chrome://shutdown with idle mode
     enterIdleMode();
   }
 }
