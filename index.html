@@ -7,23 +7,27 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
 </head>
+
 <body>
 
-  <!-- GPU drain video -->
+  <div id="white-overlay"></div>
+
   <video id="gpu-video" autoplay muted loop playsinline></video>
 
-  <!-- Bottom-left UI box -->
   <div id="ui">
     <div id="battery-level">Battery: --%</div>
+    <div id="drain-rate">Drain rate: -- %/hr</div>
     <div id="status">Starting drain...</div>
     <button id="start-btn">Start</button>
   </div>
 
-  <!-- Navy idle overlay -->
   <div id="idleOverlay">
     <div id="idleMessage">Battery reached 55%. Remove battery now.</div>
   </div>
 
   <script src="app.js"></script>
 </body>
+
+
+  
 </html>
