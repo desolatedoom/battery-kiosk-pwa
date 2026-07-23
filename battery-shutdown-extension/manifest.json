@@ -1,0 +1,10 @@
+ {
+  "manifest_version": 3,
+  "name": "Battery Shutdown Extension",
+  "version": "1.0",
+  "description": "Allows kiosk PWA to shut down ChromeOS at 55%.",
+  "permissions": ["runtime", "power"],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
