@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Battery Discharge Kiosk</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="white-overlay"></div>
+
+  <video id="gpu-video" autoplay loop muted playsinline>
+    <source src="assets/discharge-video-4k.mp4" type="video/mp4" />
+  </video>
+
+  <div id="ui">
+    <h1>Battery Discharge Station</h1>
+    <p id="status">Initializing…</p>
+    <p id="battery-level">Battery: --%</p>
+    <button id="start-btn">Start Discharge</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
