@@ -1,26 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Battery Discharge Kiosk</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Battery Processing Kiosk</title>
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    #idleOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #0a1a3a; /* deep navy */
+      display: none;
+      z-index: 9999;
+    }
+
+    #idleMessage {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      text-align: center;
+      color: #cbd3e1;
+      font-size: 2rem;
+      transform: translateY(-50%);
+    }
+
+    #mainUI {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #batteryLevel {
+      font-size: 3rem;
+      margin-bottom: 20px;
+    }
+
+    #status {
+      font-size: 1.5rem;
+    }
+  </style>
 </head>
 <body>
-  <div id="white-overlay"></div>
 
-  <video id="gpu-video" autoplay loop muted playsinline>
-    <source src="assets/discharge-video-4k.mp4" type="video/mp4" />
-  </video>
+  <!-- Main UI -->
+  <div id="mainUI">
+    <div id="batteryLevel">Battery: --%</div>
+    <div id="status">Starting drain...</div>
 
-  <div id="ui">
-    <h1>Battery Discharge Station</h1>
-    <p id="status">Initializing…</p>
-    <p id="battery-level">Battery: --%</p>
-    <button id="start-btn">Start Discharge</button>
+    <!-- Hidden video/audio elements -->
+    <video id="drainVideo" width="1" height="1" autoplay muted loop playsinline></video>
+    <audio id="drainAudio" autoplay loop></audio>
   </div>
 
-  <script src="app.js"></script>
+  <!-- Idle Overlay -->
+  <div id="idleOverlay">
+    <div id="idleMessage">Battery reached 55%. Remove battery now.</div>
+  </div>
+
+  <script src="main.js"></script>
 </body>
 </html>
