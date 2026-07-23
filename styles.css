@@ -8,16 +8,31 @@ html, body {
   overflow: hidden;
 }
 
-#white-overlay {
+/* Main UI container */
+#mainUI {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: white;
-  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
+/* Battery + status text */
+#battery-level {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+#status {
+  font-size: 1.5rem;
+}
+
+/* GPU drain video (kept from your old CSS) */
 #gpu-video {
   position: fixed;
   top: 0;
@@ -29,6 +44,7 @@ html, body {
   opacity: 1;
 }
 
+/* Bottom-left UI box (kept from your old CSS) */
 #ui {
   position: fixed;
   bottom: 20px;
@@ -40,6 +56,7 @@ html, body {
   border-radius: 8px;
 }
 
+/* Start button (kept from your old CSS) */
 #start-btn {
   margin-top: 8px;
   padding: 8px 12px;
@@ -49,4 +66,27 @@ html, body {
   color: #000;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* Navy idle overlay (new) */
+#idleOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #0a1a3a; /* deep navy */
+  display: none;
+  z-index: 9999;
+}
+
+/* Idle message (new) */
+#idleMessage {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  text-align: center;
+  color: #cbd3e1;
+  font-size: 2rem;
+  transform: translateY(-50%);
 }
