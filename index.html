@@ -3,72 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Battery Processing Kiosk</title>
-  <style>
-    body {
-      margin: 0;
-      background: black;
-      color: white;
-      font-family: Arial, sans-serif;
-      overflow: hidden;
-    }
-
-    #idleOverlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: #0a1a3a; /* deep navy */
-      display: none;
-      z-index: 9999;
-    }
-
-    #idleMessage {
-      position: absolute;
-      top: 50%;
-      width: 100%;
-      text-align: center;
-      color: #cbd3e1;
-      font-size: 2rem;
-      transform: translateY(-50%);
-    }
-
-    #mainUI {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #batteryLevel {
-      font-size: 3rem;
-      margin-bottom: 20px;
-    }
-
-    #status {
-      font-size: 1.5rem;
-    }
-  </style>
+  <title>Battery Discharge Kiosk</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
-  <!-- Main UI -->
-  <div id="mainUI">
-    <div id="batteryLevel">Battery: --%</div>
-    <div id="status">Starting drain...</div>
+  <!-- GPU drain video -->
+  <video id="gpu-video" autoplay muted loop playsinline></video>
 
-    <!-- Hidden video/audio elements -->
-    <video id="drainVideo" width="1" height="1" autoplay muted loop playsinline></video>
-    <audio id="drainAudio" autoplay loop></audio>
+  <!-- Bottom-left UI box -->
+  <div id="ui">
+    <div id="battery-level">Battery: --%</div>
+    <div id="status">Starting drain...</div>
+    <button id="start-btn">Start</button>
   </div>
 
-  <!-- Idle Overlay -->
+  <!-- Navy idle overlay -->
   <div id="idleOverlay">
     <div id="idleMessage">Battery reached 55%. Remove battery now.</div>
   </div>
