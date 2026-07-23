@@ -2,6 +2,9 @@ const TARGET_LEVEL = 0.55; // 55%
 let batteryRef = null;
 let discharging = false;
 let wakeLock = null;
+let lastLevel = null;
+let lastTime = null;
+
 
 // UI elements
 const statusEl = document.getElementById("status");
@@ -30,9 +33,28 @@ async function initBattery() {
 
 function updateBatteryUI() {
   if (!batteryRef) return;
+
   const pct = Math.round(batteryRef.level * 100);
-  levelEl.textContent = `Battery: ${pct}% (charging: ${batteryRef.charging ? "yes" : "no"})`;
+  levelEl.textContent = `Battery: ${pct}%`;
+
+  // Drain rate calculation
+  const now = Date.now();
+
+  if (lastLevel !== null && lastTime !== null) {
+    const deltaPct = lastLevel - pct;
+    const deltaHours = (now - lastTime) / 3600000;
+
+    if (deltaHours > 0) {
+      const rate = (deltaPct / deltaHours).toFixed(2);
+      document.getElementById("drain-rate").textContent =
+        `Drain rate: ${rate} %/hr`;
+    }
+  }
+
+  lastLevel = pct;
+  lastTime = now;
 }
+
 
 function attachBatteryListeners() {
   batteryRef.addEventListener("levelchange", () => {
@@ -116,15 +138,19 @@ function stopDischarge() {
 function enterIdleMode() {
   stopDischarge();
 
-  // Hide main UI
-  mainUI.style.display = "none";
+  // Switch white overlay to navy
+  const whiteOverlay = document.getElementById("white-overlay");
+  whiteOverlay.style.backgroundColor = "#0a1a3a"; // navy
 
-  // Show navy overlay
+  // Hide UI
+  document.getElementById("ui").style.display = "none";
+
+  // Show idle overlay message
   idleOverlay.style.display = "block";
 
-  // ChromeOS kiosk idle timeout will shut down automatically
   statusEl.textContent = "Idle mode activated.";
 }
+
 
 // ------------------------------
 // Threshold Check
